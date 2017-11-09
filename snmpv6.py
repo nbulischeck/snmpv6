@@ -7,6 +7,38 @@ from pysnmp.entity.rfc3413 import cmdgen
 addressList = []
 linkTypes = ["Loopback:", "Unique Local:", "Link-Local:"]
 
+def getHost(snmpEngine, sendRequestHandle, errorIndication,
+          errorStatus, errorIndex, varBindTable, cbCtx):
+	if errorIndication:
+		print(errorIndication)
+		return
+	if errorStatus and errorStatus != 2:
+		print('Error: %s' % errorStatus.prettyPrint())
+		return
+	for varBindRow in varBindTable:
+		for oid, val in varBindRow:
+			if "1.3.6.1.2.1.1.1.0" in oid.prettyPrint():
+				print("System Info:\t", val.prettyPrint())
+				return
+		print("[!] Unable to find system info!")
+		return
+
+def getAddrs(snmpEngine, sendRequestHandle, errorIndication,
+          errorStatus, errorIndex, varBindTable, cbCtx):
+	if errorIndication:
+		print(errorIndication)
+		return
+	if errorStatus and errorStatus != 2:
+		print('Error: %s' % errorStatus.prettyPrint())
+		return
+	for varBindRow in varBindTable:
+		for oid, val in varBindRow:
+			if "1.3.6.1.2.1.4.34.1.3.2.16" not in oid.prettyPrint():
+				return
+			else:
+				addressList.append(oid.prettyPrint())
+	return 1
+
 def createSNMP(ip, community=None):
 	if community is None:
 		community = "public"
@@ -29,27 +61,19 @@ def createSNMP(ip, community=None):
 		snmpEngine,
 		'my-router',
 		None, '',
-		[((1, 3, 6, 1, 2, 1, 4, 34, 1, 3, 2, 16), None)],
-		cbFun
+		[((1, 3, 6, 1, 2, 1, 1, 0, 0), None)],
+		getHost
 	)
-
 	snmpEngine.transportDispatcher.runDispatcher()
 
-def cbFun(snmpEngine, sendRequestHandle, errorIndication,
-          errorStatus, errorIndex, varBindTable, cbCtx):
-	if errorIndication:
-		print(errorIndication)
-		return
-	if errorStatus and errorStatus != 2:
-		print('Error: %s' % errorStatus.prettyPrint())
-		return
-	for varBindRow in varBindTable:
-		for oid, val in varBindRow:
-			if "1.3.6.1.2.1.4.34.1.3.2.16" not in oid.prettyPrint():
-				return
-			else:
-				addressList.append(oid.prettyPrint())
-	return 1
+	cmdgen.NextCommandGenerator().sendVarBinds(
+		snmpEngine,
+		'my-router',
+		None, '',
+		[((1, 3, 6, 1, 2, 1, 4, 34, 1, 3, 2, 16), None)],
+		getAddrs
+	)
+	snmpEngine.transportDispatcher.runDispatcher()
 
 def main():
 	parser = argparse.ArgumentParser(description="Get IPv6 Addresses via SNMP")
