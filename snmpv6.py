@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+from socket import gethostbyname
 from pysnmp.entity import engine, config
 from pysnmp.carrier.asyncore.dgram import udp
 from pysnmp.entity.rfc3413 import cmdgen
@@ -39,10 +40,11 @@ def getAddrs(snmpEngine, sendRequestHandle, errorIndication,
 				addressList.append(oid.prettyPrint())
 	return 1
 
-def createSNMP(ip, community=None):
+def createSNMP(host, community=None):
 	if community is None:
 		community = "public"
 
+	ip = gethostbyname(host)
 	snmpEngine = engine.SnmpEngine()
 	config.addV1System(snmpEngine, 'my-area', community)
 	config.addTargetParams(snmpEngine, 'my-creds', 'my-area', 'noAuthNoPriv', 0)
@@ -76,9 +78,11 @@ def createSNMP(ip, community=None):
 	snmpEngine.transportDispatcher.runDispatcher()
 
 def main():
-	parser = argparse.ArgumentParser(description="Get IPv6 Addresses via SNMP")
+	parser = argparse.ArgumentParser(description="Get IPv6 Addresses via SNMP", 
+										add_help=False)
+	parser.add_argument("--help", action="help")
 	required = parser.add_argument_group('required arguments')
-	required.add_argument("-i", dest="ipaddress",
+	required.add_argument("-h", dest="host",
 						help="ip address of the remote host",
 						required=True,
 						action="store")
@@ -88,8 +92,8 @@ def main():
 						action="store")
 	args = parser.parse_args()
 
-	if args.ipaddress and args.community:
-		createSNMP(args.ipaddress, args.community)
+	if args.host and args.community:
+		createSNMP(args.host, args.community)
 		if addressList:
 			for i, address in enumerate(addressList):
 				address = address[len("1.3.6.1.2.1.4.34.1.3.2.16."):].split(".")

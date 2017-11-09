@@ -11,20 +11,21 @@ Enumerate IPv6 addresses using SNMP
 ## Usage
 
 ```
-usage: snmpv6.py [-h] -i IPADDRESS -c COMMUNITY
+usage: snmpv6.py [--help] -h HOST -c COMMUNITY
 
 Get IPv6 Addresses via SNMP
 
 optional arguments:
-  -h, --help    show this help message and exit
+  --help
 
 required arguments:
-  -i IPADDRESS  ip address of the remote host
+  -h HOST       ip address of the remote host
   -c COMMUNITY  community (public, private, etc.)
 ```
 
-IP address and community are required.
+Host and Community are required.
 
-Example:
+Examples:
 
-`python snmpv6.py -i 192.168.1.10 -c public`
+`python snmpv6.py -h demo.snmplabs.com -c public`
+`python snmpv6.py -h 104.236.166.95 -c private`
